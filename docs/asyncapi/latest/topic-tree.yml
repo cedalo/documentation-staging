@@ -570,6 +570,49 @@ components:
                 required:
                   - command
                   - data
+              - description: getLimits response
+                properties:
+                  command:
+                    type: string
+                    enum:
+                      - getLimits
+                    description: >-
+                      Command which describes the action processed by the plugin.
+                  data:
+                    type: object
+                    properties:
+                      publishLimit:
+                        type: integer
+                        default: 50000
+                        description: |
+                          Maximum number of publish topics to store.
+                      subscribeLimit:
+                        type: integer
+                        default: 50000
+                        description: |
+                          Maximum number of subscribe topics to store.
+                      payloadLimit:
+                        type: integer
+                        default: 1000
+                        description: |
+                          Maximum payload size to store, in bytes.
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                required:
+                  - command
+                  - data
+              - description: setLimits response
+                properties:
+                  command:
+                    type: string
+                    enum:
+                      - setLimits
+                    description: >-
+                      Command which describes the action processed by the plugin.
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                required:
+                  - command
               - description: error response
                 properties:
                   command:
