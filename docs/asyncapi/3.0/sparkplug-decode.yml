@@ -17,11 +17,11 @@ info:
 
 defaultContentType: application/json
 channels:
-  $CONTROL/cedalo/topictree/v1:
+  $CONTROL/cedalo/sparkplug-decode/v1:
     publish:
       message:
         $ref: '#/components/messages/ControlRequest'
-  $CONTROL/cedalo/topictree/v1/response:
+  $CONTROL/cedalo/sparkplug-decode/v1/response:
     subscribe:
       message:
         $ref: '#/components/messages/ControlResponse'
@@ -65,7 +65,7 @@ components:
           payload:
             commands:
               - command: setMaxDepth
-                depth: 20
+                maxDepth: 20
 
     ControlResponse:
       name: controlResponse
@@ -77,44 +77,44 @@ components:
           summary: successful getDecodeMode response message.
           payload:
             responses:
-                - command: getDecodeMode
-                  data:
-                    mode: basic
-                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+              - command: getDecodeMode
+                data:
+                  mode: basic
+                correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
         - name: setDecodeMode
           summary: successful setDecodeMode response message.
           payload:
             responses:
-                - command: setDecodeMode
-                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+              - command: setDecodeMode
+                correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
         - name: getTopicPrefix
           summary: successful getTopicPrefix response message.
           payload:
             responses:
-                - command: getTopicPrefix
-                  data:
-                    topicPrefix: plant/line
-                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+              - command: getTopicPrefix
+                data:
+                  topicPrefix: plant/line
+                correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
         - name: setDecodeMode
           summary: successful setTopicPrefix response message.
           payload:
             responses:
-                - command: setTopicPrefix
-                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+              - command: setTopicPrefix
+                correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
         - name: getMaxDepth
           summary: successful getMaxDepth response message.
           payload:
             responses:
-                - command: getMaxDepth
-                  data:
-                    maxDepth: 20
-                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+              - command: getMaxDepth
+                data:
+                  maxDepth: 20
+                correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
         - name: setDecodeMode
           summary: successful setMaxDepth response message.
           payload:
             responses:
-                - command: setMaxDepth
-                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+              - command: setMaxDepth
+                correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
         - name: error
           summary: Example of an error response message.
           payload:
@@ -206,7 +206,7 @@ components:
               - description: getMaxDepth request
                 properties:
                   command:
-                    type: integer
+                    type: string
                     enum:
                       - getMaxDepth
                     description: |
@@ -219,7 +219,7 @@ components:
               - description: setMaxDepth request
                 properties:
                   command:
-                    type: integer
+                    type: string
                     enum:
                       - setMaxDepth
                     description: |
