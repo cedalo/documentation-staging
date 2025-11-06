@@ -12,6 +12,8 @@ info:
     `getDecodeMode`/`setDecodeMode` to get/set the mode of operation.
     `getTopicPrefix`/`setTopicPrefix` to get/set the topic prefix used when
     publishing.
+    `getMaxDepth`/`setMaxDepth` to get/set the maximum depth for
+    propertySet/propertySetList objects.
 
 defaultContentType: application/json
 channels:
@@ -53,10 +55,21 @@ components:
             commands:
               - command: setTopicPrefix
                 topicPrefix: "plant/line"
+        - name: getMaxDepth
+          summary: Example of a getMaxDepth message.
+          payload:
+            commands:
+              - command: getMaxDepth
+        - name: setMaxDepth
+          summary: Example of a setMaxDepth message.
+          payload:
+            commands:
+              - command: setMaxDepth
+                depth: 20
 
     ControlResponse:
       name: controlResponse
-      title: Response to an executed getDecodeMode/setDecodeMode/getTopicPrefix/setTopicPrefix request
+      title: Response to an executed getDecodeMode/setDecodeMode/getTopicPrefix/setTopicPrefix/getMaxDepth/setMaxDepth request
       payload:
         $ref: '#/components/schemas/controlResponsePayload'
       examples:
@@ -87,6 +100,20 @@ components:
           payload:
             responses:
                 - command: setTopicPrefix
+                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+        - name: getMaxDepth
+          summary: successful getMaxDepth response message.
+          payload:
+            responses:
+                - command: getMaxDepth
+                  data:
+                    maxDepth: 20
+                  correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
+        - name: setDecodeMode
+          summary: successful setMaxDepth response message.
+          payload:
+            responses:
+                - command: setMaxDepth
                   correlationData: 37a6e977-2b4f-4431-83f7-5bd93b35c152
         - name: error
           summary: Example of an error response message.
@@ -176,6 +203,40 @@ components:
                 required:
                   - command
                   - topicPrefix
+              - description: getMaxDepth request
+                properties:
+                  command:
+                    type: integer
+                    enum:
+                      - getMaxDepth
+                    description: |
+                      Command to get the maximum object depth.
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                additionalProperties: false
+                required:
+                  - command
+              - description: setMaxDepth request
+                properties:
+                  command:
+                    type: integer
+                    enum:
+                      - setMaxDepth
+                    description: |
+                      Command to set the maximum object depth.
+                  maxDepth:
+                    type: integer
+                    default: 10
+                    description: |
+                      Sets the maximum depth of nested propertySet,
+                      propertySetList, or template type metrics that will be
+                      decoded.
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                additionalProperties: false
+                required:
+                  - command
+                  - maxDepth
       additionalProperties: false
     controlResponsePayload:
       type:
@@ -255,6 +316,38 @@ components:
                     $ref: '#/components/schemas/correlationData'
                 required:
                   - command
+              - description: getMaxDepth response
+                properties:
+                  command:
+                    type: string
+                    enum:
+                      - getMaxDepth
+                    description: >-
+                      Get the maximum object depth.
+                  data:
+                    type: object
+                    properties:
+                      maxDepth:
+                        type: integer
+                        description: |
+                          Maximum depth
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                required:
+                  - command
+                  - data
+              - description: setMaxDepth response
+                properties:
+                  command:
+                    type: string
+                    enum:
+                      - setMaxDepth
+                    description: >-
+                      Set the maximum object depth.
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                required:
+                  - command
               - description: error response
                 properties:
                   command:
@@ -264,6 +357,8 @@ components:
                       - setDecodeMode
                       - getTopicPrefix
                       - setTopicPrefix
+                      - getMaxDepth
+                      - setMaxDepth
                     description: >-
                       Command which describes the action processed by the plugin.
                   error:
@@ -285,4 +380,3 @@ components:
         value in the response message.
       examples:
         - 37a6e977-2b4f-4431-83f7-5bd93b35c152
-
