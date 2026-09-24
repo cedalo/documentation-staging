@@ -158,6 +158,12 @@ components:
             - command: "getRole"
               rolename: "rolename"
 
+        - name: getRolePublishRateLimit
+          payload:
+            commands:
+              - command: "getRolePublishRateLimit"
+                rolename: "rolename"
+
         - name: listClients
           payload:
             commands:
@@ -293,6 +299,16 @@ components:
                 allow: false
               - acltype: "unsubscribe"
                 allow: true
+        - name: setRolePublishRateLimit
+          payload:
+            commands:
+              - command: "setRolePublishRateLimit"
+                rolename: "rolename"
+                incoming_rate_limit: 42
+                outgoing_rate_limit: 42
+                incoming_time_frame: "1s"
+                outgoing_time_frame: "1s"
+
     ControlResponse:
       name: controlResponse
       title: Response to an executed control API request
@@ -449,6 +465,18 @@ components:
                         topic: "topic"
                         priority: -1
                         allow: true
+                correlationData: 1234-request
+
+        - name: successful getRolePublishRateLimit response
+          payload:
+            responses:
+              - command: "getRolePublishRateLimit"
+                data:
+                    rolename: "rolename"
+                    incoming_rate_limit: 42
+                    outgoing_rate_limit: 42
+                    incoming_time_frame: "1s"
+                    outgoing_time_frame: "1s"
                 correlationData: 1234-request
 
         - name: successful non-verbose listClients response
@@ -638,6 +666,12 @@ components:
           payload:
             responses:
               - command: "setDefaultACLAccess"
+                correlationData: 1234-request
+
+        - name: successful setRolePublishRateLimit
+          payload:
+            responses:
+              - command: "setRolePublishRateLimit"
                 correlationData: 1234-request
 
         - name: error response
@@ -1061,6 +1095,26 @@ components:
                   - command
                   - rolename
 
+              - description: getRolePublishRateLimit request
+                type:
+                  - object
+                properties:
+                  command:
+                    type: string
+                    enum:
+                      - getRolePublishRateLimit
+                    description: |
+                      Get the rate limits and time frames for a role.
+                  rolename:
+                    $ref: '#/components/schemas/rolename'
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                additionalProperties: false
+                required:
+                  - command
+                  - rolename
+
+
               - description: listClients request
                 type:
                   - object
@@ -1481,6 +1535,32 @@ components:
                 required:
                   - command
                   - acls
+              - description: setRolePublishRateLimit request
+                properties:
+                  command:
+                    type: string
+                    enum:
+                      - setRolePublishRateLimit
+                  data:
+                    type: object
+                    properties:
+                      rolename:
+                        $ref: '#/components/schemas/rolename'
+                      incoming_rate_limit:
+                        $ref: '#/components/schemas/ratelimit'
+                      outgoing_rate_limit:
+                        $ref: '#/components/schemas/ratelimit'
+                      incoming_time_frame:
+                        $ref: '#/components/schemas/timeframe'
+                      outgoing_time_frame:
+                        $ref: '#/components/schemas/timeframe'
+                    additionalProperties: false
+                    required:
+                      - rolename
+                      - incoming_rate_limit
+                      - outgoing_rate_limit
+                      - incoming_time_frame
+                      - outgoing_time_frame
       additionalProperties: false
     controlResponsePayload:
       type:
@@ -1521,6 +1601,7 @@ components:
                     - "setClientId"
                     - "setClientPassword"
                     - "setDefaultACLAccess"
+                    - "setRolePublishRateLimit"
                   correlationData:
                     $ref: '#/components/schemas/correlationData'
                 additionalProperties: false
@@ -1632,6 +1713,39 @@ components:
                     required:
                       - role
                     additionalProperties: false
+                  correlationData:
+                    $ref: '#/components/schemas/correlationData'
+                additionalProperties: false
+                required:
+                  - command
+                  - data
+
+              - description: getRolePublishRateLimit response
+                properties:
+                  command:
+                    type: string
+                    enum:
+                      - getRolePublishRateLimit
+                  data:
+                    type: object
+                    properties:
+                      rolename:
+                        $ref: '#/components/schemas/rolename'
+                      incoming_rate_limit:
+                        $ref: '#/components/schemas/ratelimit'
+                      outgoing_rate_limit:
+                        $ref: '#/components/schemas/ratelimit'
+                      incoming_time_frame:
+                        $ref: '#/components/schemas/timeframe'
+                      outgoing_time_frame:
+                        $ref: '#/components/schemas/timeframe'
+                    additionalProperties: false
+                    required:
+                      - rolename
+                      - incoming_rate_limit
+                      - outgoing_rate_limit
+                      - incoming_time_frame
+                      - outgoing_time_frame
                   correlationData:
                     $ref: '#/components/schemas/correlationData'
                 additionalProperties: false
@@ -1798,6 +1912,7 @@ components:
         - getDefaultACLAccess
         - getGroup
         - getRole
+        - getRolePublishRateLimit
         - listClients
         - listGroups
         - listRoles
@@ -1813,6 +1928,7 @@ components:
         - setClientId
         - setClientPassword
         - setDefaultACLAccess
+        - setRolePublishRateLimit
       description: >-
         Command which describes the action processed by the plugin.
     username:
@@ -1948,6 +2064,22 @@ components:
       type: boolean
       description: |
         Whether MQTT wildcards are allowed for subscriptions in this role.
+    ratelimit:
+      type: integer
+      maximum: 4294967295
+      description: |
+        Value to set the rate limit for a role. The default value is -1 which means there
+        is no rate limit configured. If wished, set the value to 0 to achieve an unlimited
+        rate limit. The rate limit is interpreted as messages per configured time frame.
+    timeframe:
+      type: string
+      description: |
+        Value to set time frame for a role. This value determines how many messages can be
+        send in a specific time window. This value consist of atleast two characters. One
+        for the numerical value followed by a character for the time unit. Default value is
+        '0s' which means that no time frame is configured. Setting a time frame has only an
+        effect, if any rate limit, either globally via mosquitto.conf or on a DynSec role, is
+        configured.
     address:
       type: string
       description: |
@@ -2079,6 +2211,28 @@ components:
               - priority
               - allow
             additionalProperties: false
+        incoming_rate_limit:
+          type: integer
+          description: |
+            Integer value to set the incoming rate limit. Default value is -1 which means no rate limit is specified.
+            For an unlimited message rate set the value to 0.
+        outgoing_rate_limit:
+          type: integer
+          description: |
+            Integer value to set the outgoing rate limit. Default value is -1 which means no rate limit is specified.
+            For an unlimited message rate set the value to 0.
+
+        incoming_time_frame:
+          type: string
+          description: |
+            String value to set the incoming time frame. The string consistst of at least two characters. One or more characters
+            representing the numerical value followed by the value for the time unit.
+
+        outgoing_time_frame:
+          type: string
+          description: |
+            String value to set the outgoing time frame. The string consistst of at least two characters. One or more characters
+            representing the numerical value followed by the value for the time unit.
       required:
         - rolename
         - acls
