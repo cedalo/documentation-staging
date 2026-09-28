@@ -1,11 +1,12 @@
 asyncapi: 2.6.0
 info:
   title: Dynamic Security
-  version: 3.0.1
+  version: 3.3.0
   description: |
 
-    Manage client accounts, groups, and roles used to authenticate and isolate your MQTT clients. The topic of the plugin's control API is
-    `$CONTROL/dynamic-security/v1`.
+    Manage Dynamic Security clients, roles, groups and default ACL(s)
+    used for client authentication and authorization.
+    The topic of the plugins control API is `$CONTROL/dynamic-security/v1`.
 
 defaultContentType: application/json
 channels:
@@ -172,6 +173,15 @@ components:
               count: -1
               offset: 0
 
+        - name: listClients
+          payload:
+            commands:
+            - command: "listClients"
+              verbose: true
+              filterValue: "myid"
+              filterMode: "contains"
+              filterTarget: "clientid"
+
         - name: listGroups
           payload:
             commands:
@@ -299,6 +309,7 @@ components:
                 allow: false
               - acltype: "unsubscribe"
                 allow: true
+
         - name: setRolePublishRateLimit
           payload:
             commands:
@@ -1114,7 +1125,6 @@ components:
                   - command
                   - rolename
 
-
               - description: listClients request
                 type:
                   - object
@@ -1139,6 +1149,23 @@ components:
                     type: integer
                     description: |
                       Offset the list by this amount.
+                  filterValue:
+                    type: string
+                    description: |
+                      Apply a filter to the list of clients and return a
+                      subset. This is the string that will be searched for.
+                  filterMode:
+                    $ref: '#/components/schemas/filterMode'
+                  filterTarget:
+                    type: string
+                    enum:
+                      - username
+                      - clientid
+                      - textname
+                      - textdescription
+                    description: |
+                      Set the client parameter to apply the filterValue on.
+                      Optional, defaults to username.
                   correlationData:
                     $ref: '#/components/schemas/correlationData'
                 additionalProperties: false
@@ -1169,6 +1196,22 @@ components:
                     type: integer
                     description: |
                       Offset the list by this amount.
+                  filterValue:
+                    type: string
+                    description: |
+                      Apply a filter to the list of groups and return a
+                      subset. This is the string that will be searched for.
+                  filterMode:
+                    $ref: '#/components/schemas/filterMode'
+                  filterTarget:
+                    type: string
+                    enum:
+                      - groupname
+                      - textname
+                      - textdescription
+                    description: |
+                      Set the groups parameter to apply the filterValue on.
+                      Optional, defaults to groupname.
                   correlationData:
                     $ref: '#/components/schemas/correlationData'
                 additionalProperties: false
@@ -1199,6 +1242,22 @@ components:
                     type: integer
                     description: |
                       Offset the list by this amount.
+                  filterValue:
+                    type: string
+                    description: |
+                      Apply a filter to the list of roles and return a
+                      subset. This is the string that will be searched for.
+                  filterMode:
+                    $ref: '#/components/schemas/filterMode'
+                  filterTarget:
+                    type: string
+                    enum:
+                      - rolename
+                      - textname
+                      - textdescription
+                    description: |
+                      Set the roles parameter to apply the filterValue on.
+                      Optional, defaults to rolename.
                   correlationData:
                     $ref: '#/components/schemas/correlationData'
                 additionalProperties: false
@@ -1535,6 +1594,7 @@ components:
                 required:
                   - command
                   - acls
+
               - description: setRolePublishRateLimit request
                 properties:
                   command:
@@ -2068,18 +2128,20 @@ components:
       type: integer
       maximum: 4294967295
       description: |
-        Value to set the rate limit for a role. The default value is -1 which means there
-        is no rate limit configured. If wished, set the value to 0 to achieve an unlimited
-        rate limit. The rate limit is interpreted as messages per configured time frame.
+        The value that indicates the rate limit for a role,
+        interpreted as messages per the configured time frame.
+        Defaults to -1, meaning no rate limit will be applied.
+        Set to a positive integer to apply that rate limit to the role.
+        A value of 0 means unlimited.
     timeframe:
       type: string
       description: |
-        Value to set time frame for a role. This value determines how many messages can be
-        send in a specific time window. This value consist of atleast two characters. One
-        for the numerical value followed by a character for the time unit. Default value is
-        '0s' which means that no time frame is configured. Setting a time frame has only an
-        effect, if any rate limit, either globally via mosquitto.conf or on a DynSec role, is
-        configured.
+        The value that indicates the time frame that a ratelimit for a role applies over.
+        For example ratelimit=10 and timeframe="1s" means 10 messages are allowed every 1 second.
+        The value must consist of a positive integer and a character indicating the time unit.
+        Acceptable time units are s for seconds, h for hours, d for days, w for weeks, m for months and y for years.
+        The timeframe only has an effect if a rate limit is configured for the role,
+        or if one is configured globally via mosquitto.conf.
     address:
       type: string
       description: |
@@ -2237,3 +2299,14 @@ components:
         - rolename
         - acls
       additionalProperties: false
+    filterMode:
+      type: string
+      enum:
+        - contains
+        - startsWith
+        - endsWith
+        - exact
+      description: |
+        The filterMode sets the type of string search to carry
+        out when using filterValue. Optional, defaults to
+        contains.
